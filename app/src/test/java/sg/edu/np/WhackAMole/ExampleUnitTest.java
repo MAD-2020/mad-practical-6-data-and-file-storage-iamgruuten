@@ -1,4 +1,4 @@
-package sg.edu.np.week_6_whackamole_3_0;
+package sg.edu.np.WhackAMole;
 
 import org.junit.Test;
 
