@@ -1,6 +1,8 @@
 package sg.edu.np.WhackAMole;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,7 +16,7 @@ import java.util.ArrayList;
 public class Adapter extends RecyclerView.Adapter<viewHolder> {
     private Context context;
     private User user = new User();
-    int highscore, levelscore;
+    long timer = 11;
 
     public Adapter(User user, Context context){
         this.user.setScores(user.getScores());
@@ -53,7 +55,25 @@ public class Adapter extends RecyclerView.Adapter<viewHolder> {
         return user.getUsername();
     }
 
-    public void notify(int potion){
-        notifyDataSetChanged();
+    public void openActivity(int position){
+        int levelSelect = getLevel(position);
+        Log.v("TAG", String.valueOf(levelSelect));
+        String username = getUsername();
+
+        //This is to store the timer data for the mole time
+        Intent intent = new Intent(context, AdvanceActivity.class);
+        long moleTime = (timer - levelSelect) * 1000;
+
+        intent.putExtra("timer", moleTime);
+        intent.putExtra("level", levelSelect);
+        intent.putExtra("username", username);
+        Log.v("ViewHolder", String.valueOf(moleTime));
+        ((Activity) context).startActivityForResult(intent, 1);
+
+    }
+
+    public void reloadData(){
+
+        this.notifyDataSetChanged();
     }
 }

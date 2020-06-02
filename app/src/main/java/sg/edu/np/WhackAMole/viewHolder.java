@@ -1,5 +1,6 @@
 package sg.edu.np.WhackAMole;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
@@ -12,11 +13,10 @@ import androidx.recyclerview.widget.RecyclerView;
 public class viewHolder extends RecyclerView.ViewHolder {
     TextView level, score;
     private Context mContext;
-    int highScore, levelSelect;
+    int levelSelect;
     String username;
 
     Adapter adapter;
-    long timer = 11;
 
     public viewHolder(View view, final Context context, final Adapter adapter){
         super(view);
@@ -28,24 +28,14 @@ public class viewHolder extends RecyclerView.ViewHolder {
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                highScore = adapter.getHighScore(getLayoutPosition());
-                levelSelect = adapter.getLevel(getLayoutPosition());
-                Log.v("TAG", String.valueOf(levelSelect));
-                username = adapter.getUsername();
+               adapter.openActivity(getLayoutPosition());
 
-                //This is to store the timer data for the mole time
-                Intent intent = new Intent(mContext, AdvanceActivity.class);
-                long moleTime = (timer - levelSelect) * 1000;
 
-                intent.putExtra("timer", moleTime);
-                intent.putExtra("highscore", highScore);
-                intent.putExtra("level", levelSelect);
-                intent.putExtra("username", username);
-                Log.v("ViewHolder", String.valueOf(moleTime));
-                mContext.startActivity(intent);
             }
         });
     }
+
+
     public viewHolder(@NonNull View itemView) {
         super(itemView);
     }

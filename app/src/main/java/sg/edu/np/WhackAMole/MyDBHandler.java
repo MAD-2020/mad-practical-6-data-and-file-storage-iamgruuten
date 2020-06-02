@@ -133,7 +133,7 @@ public class MyDBHandler extends SQLiteOpenHelper {
     }
 
     //Get User List of highscore
-    public ArrayList<Integer> getScore(String Username) {
+    public ArrayList<Integer> getAllScore(String Username) {
 
         ArrayList<Integer> scoreList = new ArrayList<>();
         String queryString = "Select * FROM " + USER_TABLE + " WHERE " + COLUMN_USERNAME + " = \"" + Username + "\"" + "";
@@ -143,18 +143,52 @@ public class MyDBHandler extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(queryString, null);
 
 
-        Log.v(TAG, "Adding scores");
+        Log.v(TAG, "Getting scores for " + queryString);
 
-        do {
-            int score = cursor.getInt(4);
-            scoreList.add(score);
-        } while (cursor.moveToNext());
+
+        if(cursor.moveToFirst()) {
+            do {
+                int score = cursor.getInt(4);
+                scoreList.add(score);
+            } while (cursor.moveToNext());
+
+
+        }else{
+            Log.v(TAG, "GetScore Database Failed");
+        }
 
         cursor.close();
         db.close();
-
         return scoreList;
+    }
 
+    public int getLevelScore(String Username, String Level) {
+
+        int getScore = 0;
+
+        String queryString = "Select * FROM " + USER_TABLE + " WHERE " + COLUMN_USERNAME + " = \"" + Username + "\"" + " AND " + COLUMN_LEVEL + " = \"" + Level + "\"";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(queryString, null);
+
+
+        Log.v(TAG, "Getting scores for " + queryString);
+
+
+        if(cursor.moveToFirst()) {
+            do {
+                getScore = cursor.getInt(4);
+            } while (cursor.moveToNext());
+
+
+        }else{
+            Log.v(TAG, "Get Level Database Failed");
+        }
+
+        cursor.close();
+        db.close();
+        return getScore;
     }
 
     public boolean deleteAccount(String username) {

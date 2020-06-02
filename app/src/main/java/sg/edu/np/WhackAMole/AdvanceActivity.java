@@ -1,5 +1,6 @@
 package sg.edu.np.WhackAMole;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.CountDownTimer;
@@ -21,7 +22,6 @@ public class AdvanceActivity extends AppCompatActivity {
     String TAG = "Advance";
     private CountDownTimer mCountDownTimer;
     int advancedScore = 0;
-    int highScore = 0;
     int level;
     String USERNAME = "";
 
@@ -29,18 +29,15 @@ public class AdvanceActivity extends AppCompatActivity {
     String seconds;
     long timeleft, moleTimes;
     Toast toast = null;
-    String textButton;
-    MyDBHandler myDBHandler;
 
-
-    private void readyTimer( ){
-       timeleft = 10 * 1000;
-       mCountDownTimer = new CountDownTimer(timeleft, 1000) {
+    private void readyTimer() {
+        timeleft = 10 * 1000;
+        mCountDownTimer = new CountDownTimer(timeleft, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-                if(toast != null) toast.cancel();
-                Log.v(TAG,"OnTick: " + millisUntilFinished);
-                if(toast != null) toast.cancel();
+                if (toast != null) toast.cancel();
+                Log.v(TAG, "OnTick: " + millisUntilFinished);
+                if (toast != null) toast.cancel();
                 seconds = String.valueOf(millisUntilFinished / 1000);
                 toast = Toast.makeText(AdvanceActivity.this, "Get Ready in " + seconds + " Seconds", Toast.LENGTH_SHORT);
                 toast.show();
@@ -51,14 +48,19 @@ public class AdvanceActivity extends AppCompatActivity {
                 toast.cancel();
                 Log.v(TAG, String.valueOf(moleTimes));
                 placeMoleTimer(moleTimes);
-                Log.v(TAG,"Completed");
+                Log.v(TAG, "Completed");
                 Toast.makeText(AdvanceActivity.this, "Go", Toast.LENGTH_SHORT).show();
 
             }
         }.start();
     }
-    private void placeMoleTimer(long s){
-        setNewMole();
+
+    private void placeMoleTimer(long s) {
+        int newPost = setNewMole();
+        //Check what level is this
+        if(level > 5){
+            set2ndMole(newPost);
+        }
 
         mCountDownTimer = new CountDownTimer(s, 1000) {
             @Override
@@ -67,7 +69,10 @@ public class AdvanceActivity extends AppCompatActivity {
 
             @Override
             public void onFinish() {
-                setNewMole();
+                int newPost = setNewMole();
+                if(level > 5){
+                    set2ndMole(newPost);
+                }
                 mCountDownTimer.start();
             }
         }.start();
@@ -75,11 +80,18 @@ public class AdvanceActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
+
         //Used to update score
-        updateHighScore(USERNAME, level, advancedScore);
+        Intent intent = new Intent();
+        intent.putExtra("username", USERNAME);
+        intent.putExtra("level", level);
+        intent.putExtra("score", advancedScore);
+
+        setResult(Activity.RESULT_OK, intent);
+
+        super.onBackPressed();
+
         mCountDownTimer.cancel();
-        AdvanceActivity.this.finish();
     }
 
     @Override
@@ -88,7 +100,7 @@ public class AdvanceActivity extends AppCompatActivity {
         AdvanceActivity.this.finish();
     }
 
-    private static final int[] BUTTON_IDS = {1,2,3,4,5,6,7,8,9};
+    private static final int[] BUTTON_IDS = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     private ArrayList<Button> buttonList = new ArrayList<>();
 
     @Override
@@ -104,10 +116,9 @@ public class AdvanceActivity extends AppCompatActivity {
 
         //getting data that is stored in Intent
         moleTimes = getIntent().getExtras().getLong("timer");
-        highScore = getIntent().getExtras().getInt("highscore");
         USERNAME = getIntent().getExtras().getString("username");
         level = getIntent().getExtras().getInt("level");
-        //TODO Get Mole Timer with getIntent
+
         readyTimer();
 
         for (int i = 1; i <= BUTTON_IDS.length; i++) {
@@ -115,21 +126,22 @@ public class AdvanceActivity extends AppCompatActivity {
             buttonList.add(button);
         }
 
-        for(int i = 0; i < buttonList.size(); i++){
-            final Button button = buttonList.get(i);
+        //Set on click listener to object are button id in the array
+        for (int i = 0; i < buttonList.size(); i++) {
+            Button button = buttonList.get(i);
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Button b = (Button)v;
+                    Button b = (Button) v;
                     String buttonText = b.getText().toString();
-                    doCheck(buttonText);
+                    doCheck(buttonText, b.getId());
                 }
             });
         }
     }
 
     @Override
-    protected void onStart(){
+    protected void onStart() {
         super.onStart();
         //Set all to "O"
         for (int i = 1; i <= BUTTON_IDS.length; i++) {
@@ -138,16 +150,25 @@ public class AdvanceActivity extends AppCompatActivity {
         }
     }
 
-    private void doCheck(String checkButton)
-    {
-        if(checkButton == "*") {Log.v(TAG, "Hit, Score added!"); advancedScore = advancedScore + 1;}
-        else{ Log.v(TAG, "Missed, Score deducted"); advancedScore = advancedScore - 1;}
+    private void doCheck(String checkButton, int position) {
+        if (checkButton == "*") {
+            Log.v(TAG, "Hit, Score added!");
+            advancedScore = advancedScore + 1;
+            clearHitMole(position);
+        } else {
+            Log.v(TAG, "Missed, Score deducted");
+            advancedScore = advancedScore - 1;
+        }
         viewScore.setText(Integer.toString(advancedScore));
-        setNewMole();
     }
 
-    public void setNewMole()
-    {
+    public void clearHitMole(int position) {
+        Button button = findViewById(position);
+        button.setText("O");
+    }
+
+    //Change mole position
+    public int setNewMole() {
         //Set all to "O"
         for (int i = 1; i <= BUTTON_IDS.length; i++) {
             Button button = (Button) findViewById(getResources().getIdentifier("button" + i, "id", this.getPackageName()));
@@ -155,16 +176,26 @@ public class AdvanceActivity extends AppCompatActivity {
         }
 
         Random ran = new Random();
-        int randomLocation = ran.nextInt(8)+1;
-        Log.v(TAG,"Its located at: " + randomLocation);
+        int randomLocation = ran.nextInt(8) + 1;
+        Log.v(TAG, "Its located at: " + randomLocation);
 
         Button button = (Button) findViewById(getResources().getIdentifier("button" + randomLocation, "id", this.getPackageName()));
         button.setText("*");
+        return randomLocation;
     }
 
-    public void updateHighScore(String username, int level, int score){
-        myDBHandler = new MyDBHandler(this);
-        myDBHandler.updateScore(username, level, score);
+    //A given challenge, to appear two mole at two different position
+    public void set2ndMole(int moleLocate) {
+        Random ran = new Random();
+        int x = ran.nextInt(8) + 1;
+        while (x == moleLocate) {
+            x = ran.nextInt(8) + 1;
+        }
+
+        Log.v(TAG, "2nd mole located at: " + ran);
+
+        Button button = (Button) findViewById(getResources().getIdentifier("button" + x, "id", this.getPackageName()));
+        button.setText("*");
     }
 }
 
